@@ -21,6 +21,7 @@ A web-based conversational AI assistant built using AWS Lambda, API Gateway, and
 - `.gitignore`: Specifies intentionally untracked files to ignore
 - `test_index.py`: Unit tests for Lambda function
 - `requirements.txt`: Project dependencies
+- `run_tests.sh`: Script to run tests with coverage reporting
 
 ## Setup Instructions
 
@@ -34,7 +35,7 @@ A web-based conversational AI assistant built using AWS Lambda, API Gateway, and
 1. Clone the repository
 2. Create a `.env` file with your AWS credentials
 3. Install dependencies: `pip install -r requirements.txt`
-4. Run tests: `python test_index.py` 
+4. Run tests: `./run_tests.sh` (ensures 80% code coverage)
 5. Test locally: `python index.py`
 
 ### Deployment
@@ -52,10 +53,88 @@ All sensitive information (API keys, AWS credentials) should be stored in enviro
 - Configure model ID and parameters in Lambda environment variables
 - Ensure proper IAM permissions for Bedrock API access
 
+## API Documentation
+
+### Endpoints
+
+#### POST /chat
+Processes user messages and returns AI-generated responses.
+
+**Request Format:**
+```json
+{
+  "body": "Your message here"
+}
+```
+
+**Response Format:**
+```json
+{
+  "statusCode": 200,
+  "headers": {
+    "Content-Type": "text/plain",
+    "Access-Control-Allow-Origin": "*"
+  },
+  "body": "AI-generated response text"
+}
+```
+
+**Error Response:**
+```json
+{
+  "statusCode": 500,
+  "headers": {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  },
+  "body": {
+    "message": "Internal server error"
+  }
+}
+```
+
+### Integration Patterns
+
+#### Frontend to API Gateway
+The frontend sends HTTP POST requests to the API Gateway endpoint:
+
+```javascript
+fetch('https://your-api-gateway-url/chat', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    body: userMessage
+  })
+})
+.then(response => response.text())
+.then(data => {
+  // Handle the AI response
+  console.log(data);
+})
+.catch(error => {
+  console.error('Error:', error);
+});
+```
+
+#### API Gateway to Lambda
+API Gateway passes the request to the Lambda function, which:
+1. Extracts the user message
+2. Formats a request to AWS Bedrock
+3. Processes the AI model response
+4. Returns a formatted response
+
+#### Lambda to Bedrock
+The Lambda function integrates with AWS Bedrock using:
+- Model ID: `amazon.titan-text-premier-v1:0`
+- Maximum token count: 512
+- Temperature: 0.5
+
 ## Testing
 - Comprehensive test suite with >80% code coverage
 - Unit tests for success and error scenarios
 - Mock testing of AWS Bedrock integration
-- Run tests with coverage reports: `python test_index.py`
+- Run tests with coverage reports: `./run_tests.sh`
 
 
